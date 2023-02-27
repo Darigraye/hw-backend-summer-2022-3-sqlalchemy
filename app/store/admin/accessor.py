@@ -19,16 +19,12 @@ class AdminAccessor(BaseAccessor):
                                     app.config.admin.password)
 
     async def get_by_email(self, email: str) -> Admin | None:
-        query = select(AdminModel).where(AdminModel.email == email)
+        query_get_by_email = select(AdminModel).where(AdminModel.email == email)
         async with self.app.database.session() as session:
-            res = await session.scalars(query)
-            raw_res = res.first()
-            if raw_res:
-                return Admin(
-                    id=raw_res.id,
-                    email=raw_res.email,
-                    password=raw_res.password
-                )
+            res = await session.scalars(query_get_by_email)
+            wrapped_data = res.first()
+            if wrapped_data:
+                return Admin(id=wrapped_data.id, email=wrapped_data.email, password=wrapped_data.password)
 
     async def create_admin(self, email: str, password: str) -> Admin:
         admin = AdminModel(
@@ -39,8 +35,4 @@ class AdminAccessor(BaseAccessor):
             session.add(admin)
             await session.commit()
             await session.refresh(admin)
-        return Admin(
-            id=admin.id,
-            email=admin.email,
-            password=admin.password
-        )
+        return Admin(id=admin.id, email=admin.email, password=admin.password)
